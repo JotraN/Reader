@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Reader</string>
+
+    <string name="submission_title">Title</string>
+    <string name="submission_date">01–01–2001</string>
+    <string name="submission_vote">001</string>
+
+    <string name="menu_sync">Sync</string>
+    <string name="menu_logout">Logout</string>
+</resources>
