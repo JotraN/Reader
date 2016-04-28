@@ -2,12 +2,15 @@ package io.github.jotran.reader.presenter;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import net.dean.jraw.models.Submission;
 
 import java.util.List;
 
 import io.github.jotran.reader.model.DataManager;
+import io.github.jotran.reader.model.SubmissionDbHelper;
 import io.github.jotran.reader.view.activity.SubmissionsActivity;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -18,6 +21,7 @@ public class SubmissionsPresenter {
     private SubmissionsView mView;
     private DataManager mDataManager;
     private Context mContext;
+    private SubmissionDbHelper mDbHelper;
 
     public interface SubmissionsView {
         void showLogin(String authUrl);
@@ -35,6 +39,9 @@ public class SubmissionsPresenter {
         mView = view;
         mContext = context;
         mDataManager = new DataManager();
+        mDbHelper = new SubmissionDbHelper(context);
+        // DB should always be clean/new every time.
+        mDbHelper.reset(mDbHelper.getWritableDatabase());
     }
 
     /**
@@ -84,6 +91,7 @@ public class SubmissionsPresenter {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(authenticated -> {
+                    mView.showProgressIndicator(false);
                     if (authenticated) downloadSubmissions();
                     else mView.showError(new Exception("Authentication failed."));
                 });
@@ -98,6 +106,7 @@ public class SubmissionsPresenter {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(loggedOut -> {
+                    mView.showProgressIndicator(false);
                     if (!loggedOut)
                         mView.showError(new Exception("Logging out failed."));
                 });
@@ -107,6 +116,7 @@ public class SubmissionsPresenter {
      * Downloads the first page of saved submissions.
      */
     public void downloadSubmissions() {
+        // TODO Load from db instead.
         mView.showProgressIndicator(true);
         mDataManager.downloadSubmissions()
                 .subscribeOn(Schedulers.io())
@@ -115,6 +125,9 @@ public class SubmissionsPresenter {
                     @Override
                     public void onNext(List<Submission> submissions) {
                         mView.showSubmissions(submissions);
+                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+                        mDbHelper.addSubmissions(db, submissions);
+                        db.close();
                     }
                 });
     }
@@ -131,6 +144,9 @@ public class SubmissionsPresenter {
                     @Override
                     public void onNext(List<Submission> submissions) {
                         mView.showMoreSubmissions(submissions);
+                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+                        mDbHelper.addSubmissions(db, submissions);
+                        db.close();
                     }
                 });
     }
@@ -150,6 +166,7 @@ public class SubmissionsPresenter {
         public void onError(Throwable e) {
             mView.showProgressIndicator(false);
             mView.showError(new Exception("Downloading submissions failed."));
+            Log.e("Presenter Error", "Submission Download", e);
         }
     }
 }

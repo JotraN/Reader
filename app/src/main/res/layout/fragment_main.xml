@@ -1,11 +1,11 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:app="http://schemas.android.com/apk/res-auto"
-                xmlns:tools="http://schemas.android.com/tools"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:layout_behavior="@string/appbar_scrolling_view_behavior"
-                tools:context=".view.fragment.SubmissionsFragment"
-                tools:showIn="@layout/activity_main">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context=".view.fragment.SubmissionsFragment"
+    tools:showIn="@layout/activity_main">
 
     <ProgressBar
         android:id="@+id/progressBar"
@@ -14,7 +14,8 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:fitsSystemWindows="false"
-        android:indeterminate="true"/>
+        android:indeterminate="true"
+        android:visibility="gone" />
 
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/swipeSaved"
@@ -29,8 +30,7 @@
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"
             android:paddingTop="@dimen/activity_vertical_margin"
-            android:visibility="gone">
-        </android.support.v7.widget.RecyclerView>
+            android:visibility="gone"></android.support.v7.widget.RecyclerView>
     </android.support.v4.widget.SwipeRefreshLayout>
 
 </RelativeLayout>

@@ -63,7 +63,6 @@ public class SubmissionsFragment extends Fragment implements
                 new LinearLayoutManager(getActivity(),
                         LinearLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(layoutManager);
-
         mPresenter.authenticate();
         return v;
     }
@@ -109,7 +108,6 @@ public class SubmissionsFragment extends Fragment implements
         mAdapter.setSubmissionsListener(this::loadSubmission);
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setVisibility(View.VISIBLE);
-        // TODO Clean.
         mRecyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
@@ -155,7 +153,6 @@ public class SubmissionsFragment extends Fragment implements
 
     private void logout() {
         mRecyclerView.setVisibility(View.GONE);
-        mProgressBar.setVisibility(View.VISIBLE);
         SharedPreferences prefs = getActivity()
                 .getSharedPreferences(SubmissionsActivity.PREFS_NAME, 0);
         prefs.edit().clear().apply();
