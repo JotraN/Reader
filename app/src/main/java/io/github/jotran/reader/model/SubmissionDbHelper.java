@@ -106,4 +106,23 @@ public class SubmissionDbHelper extends SQLiteOpenHelper {
         c.close();
         return submissions;
     }
+
+    /**
+     * Gets the list of unique subreddits from the given {@code SQLiteDatabase}.
+     *
+     * @param db the {@code SQLiteDatabase} to get unique subreddits from
+     * @return the list of unqiue subreddits found in the given {@code SQLiteDatabase}
+     */
+    public List<String> getSubreddits(SQLiteDatabase db) {
+        List<String> subreddits = new ArrayList<>();
+        String[] projection = {SubmissionsContract.SubmissionEntry.COLUMN_NAME_SUBREDDIT};
+        Cursor c = db.query(true, SubmissionsContract.SubmissionEntry.TABLE_NAME, projection, null,
+                null, null, null, null, null);
+        while (c.moveToNext()) {
+            int subIndex = c.getColumnIndex(SubmissionsContract.SubmissionEntry.COLUMN_NAME_SUBREDDIT);
+            subreddits.add(c.getString(subIndex));
+        }
+        c.close();
+        return subreddits;
+    }
 }

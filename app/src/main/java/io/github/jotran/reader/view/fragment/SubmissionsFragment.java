@@ -130,6 +130,11 @@ public class SubmissionsFragment extends Fragment implements
     }
 
     @Override
+    public void showSubreddits(List<String> subreddits) {
+       // TODO Implement
+    }
+
+    @Override
     public void showProgressIndicator(boolean show) {
         if (show) mProgressBar.setVisibility(View.VISIBLE);
         else mProgressBar.setVisibility(View.GONE);

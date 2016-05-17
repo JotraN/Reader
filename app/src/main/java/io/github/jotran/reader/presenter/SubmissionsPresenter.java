@@ -30,6 +30,8 @@ public class SubmissionsPresenter {
 
         void showMoreSubmissions(List<Submission> submissions);
 
+        void showSubreddits(List<String> subreddits);
+
         void showProgressIndicator(boolean show);
 
         void showError(Throwable e);
@@ -128,6 +130,7 @@ public class SubmissionsPresenter {
                         SQLiteDatabase db = mDbHelper.getWritableDatabase();
                         mDbHelper.addSubmissions(db, submissions);
                         db.close();
+                        downloadSubreddits();
                     }
                 });
     }
@@ -168,5 +171,13 @@ public class SubmissionsPresenter {
             mView.showError(new Exception("Downloading submissions failed."));
             Log.e("Presenter Error", "Submission Download", e);
         }
+    }
+
+    /**
+     * Downloads the unique subreddits belonging to the submissions.
+     */
+    public void downloadSubreddits(){
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+        mView.showSubreddits(mDbHelper.getSubreddits(db));
     }
 }
