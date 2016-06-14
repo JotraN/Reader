@@ -2,16 +2,18 @@ package io.github.jotran.reader.presenter;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import net.dean.jraw.models.Submission;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import io.github.jotran.reader.model.DataManager;
-import io.github.jotran.reader.model.SubmissionDbHelper;
-import io.github.jotran.reader.view.activity.SubmissionsActivity;
+import io.github.jotran.reader.view.activity.MainActivity;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -21,16 +23,17 @@ public class SubmissionsPresenter {
     private SubmissionsView mView;
     private DataManager mDataManager;
     private Context mContext;
-    private SubmissionDbHelper mDbHelper;
 
     public interface SubmissionsView {
+        void showAuthenticated();
+
         void showLogin(String authUrl);
 
         void showSubmissions(List<Submission> submissions);
 
         void showMoreSubmissions(List<Submission> submissions);
 
-        void showSubreddits(List<String> subreddits);
+        void showSubreddits(Collection<String> subreddits);
 
         void showProgressIndicator(boolean show);
 
@@ -41,9 +44,6 @@ public class SubmissionsPresenter {
         mView = view;
         mContext = context;
         mDataManager = new DataManager();
-        mDbHelper = new SubmissionDbHelper(context);
-        // DB should always be clean/new every time.
-        mDbHelper.reset(mDbHelper.getWritableDatabase());
     }
 
     /**
@@ -52,7 +52,7 @@ public class SubmissionsPresenter {
      */
     public void authenticate() {
         SharedPreferences prefs = mContext
-                .getSharedPreferences(SubmissionsActivity.PREFS_NAME, 0);
+                .getSharedPreferences(MainActivity.PREFS_NAME, 0);
         String refreshToken = prefs.getString(PREFS_REFRESH_TOKEN, null);
         boolean loggedOut = refreshToken == null;
         if (loggedOut) mView.showLogin(mDataManager.getAuthUrl());
@@ -73,10 +73,10 @@ public class SubmissionsPresenter {
                 .subscribe(refreshToken -> {
                     if (refreshToken != null) {
                         SharedPreferences prefs = mContext
-                                .getSharedPreferences(SubmissionsActivity.PREFS_NAME, 0);
+                                .getSharedPreferences(MainActivity.PREFS_NAME, 0);
                         prefs.edit().putString(PREFS_REFRESH_TOKEN, refreshToken)
                                 .apply();
-                        downloadSubmissions();
+                        mView.showAuthenticated();
                     } else
                         mView.showError(new Exception("Authentication failed."));
                 });
@@ -94,7 +94,7 @@ public class SubmissionsPresenter {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(authenticated -> {
                     mView.showProgressIndicator(false);
-                    if (authenticated) downloadSubmissions();
+                    if (authenticated) mView.showAuthenticated();
                     else mView.showError(new Exception("Authentication failed."));
                 });
     }
@@ -115,10 +115,13 @@ public class SubmissionsPresenter {
     }
 
     /**
-     * Downloads the first page of saved submissions.
+     * Downloads the first page of saved submissions, filtering the submissions by the given
+     * subreddit.
+     *
+     * @param subreddit the subreddit to filter the submissions by, use null to not filter
+     *                  submissions
      */
-    public void downloadSubmissions() {
-        // TODO Load from db instead.
+    public void downloadSubmissions(String subreddit) {
         mView.showProgressIndicator(true);
         mDataManager.downloadSubmissions()
                 .subscribeOn(Schedulers.io())
@@ -126,19 +129,38 @@ public class SubmissionsPresenter {
                 .subscribe(new SubmissionsSubscriber() {
                     @Override
                     public void onNext(List<Submission> submissions) {
-                        mView.showSubmissions(submissions);
-                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-                        mDbHelper.addSubmissions(db, submissions);
-                        db.close();
-                        downloadSubreddits();
+                        if (subreddit != null)
+                            mView.showSubmissions(filterSubmissions(submissions, subreddit));
+                        else {
+                            downloadSubreddits(submissions);
+                            mView.showSubmissions(submissions);
+                        }
                     }
                 });
     }
 
     /**
-     * Downloads the next page of saved submissions.
+     * Filters the given list of submissions by the given subreddit.
+     *
+     * @param submissions the list of submissions to filter
+     * @param subreddit   the subreddit to filter by
+     * @return the list of filtered submissions
      */
-    public void downloadNextSubmissions() {
+    private List<Submission> filterSubmissions(List<Submission> submissions, String subreddit) {
+        List<Submission> filteredSubmissions = new ArrayList<>();
+        for (Submission submission : submissions)
+            if (submission.getSubredditName().equals(subreddit))
+                filteredSubmissions.add(submission);
+        return filteredSubmissions;
+    }
+
+    /**
+     * Downloads the next page of saved submissions, filtering the submissions by the given
+     * subreddit.
+     *
+     * @param subreddit the subreddit to filter by, use null to not filter submissions
+     */
+    public void downloadNextSubmissions(String subreddit) {
         mView.showProgressIndicator(true);
         mDataManager.downloadNextSubmissions()
                 .subscribeOn(Schedulers.io())
@@ -146,10 +168,10 @@ public class SubmissionsPresenter {
                 .subscribe(new SubmissionsSubscriber() {
                     @Override
                     public void onNext(List<Submission> submissions) {
-                        mView.showMoreSubmissions(submissions);
-                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-                        mDbHelper.addSubmissions(db, submissions);
-                        db.close();
+                        if (subreddit != null)
+                            mView.showMoreSubmissions(filterSubmissions(submissions, subreddit));
+                        else
+                            mView.showMoreSubmissions(submissions);
                     }
                 });
     }
@@ -176,8 +198,10 @@ public class SubmissionsPresenter {
     /**
      * Downloads the unique subreddits belonging to the submissions.
      */
-    public void downloadSubreddits(){
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        mView.showSubreddits(mDbHelper.getSubreddits(db));
+    public void downloadSubreddits(List<Submission> submissions) {
+        Set<String> subreddits = new TreeSet<>();
+        for (Submission submission : submissions)
+            subreddits.add(submission.getSubredditName());
+        mView.showSubreddits(subreddits);
     }
 }

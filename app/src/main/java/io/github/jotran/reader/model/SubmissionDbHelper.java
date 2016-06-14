@@ -91,11 +91,25 @@ public class SubmissionDbHelper extends SQLiteOpenHelper {
      * @return the list of {@code Submission}s found in the given {@code SQLiteDatabase}
      */
     public List<Submission> getSubmissions(SQLiteDatabase db) {
+        return getSubmissions(db, "*");
+    }
+
+    /**
+     * Gets the list of {@code Submission}s from the given {@code SQLiteDatabase}.
+     *
+     * @param db        the {@code SQLiteDatabase} to get {@code Submission}s from
+     * @param subreddit the subreddit to filter with
+     * @return the list of {@code Submission}s found in the given {@code SQLiteDatabase}
+     */
+    public List<Submission> getSubmissions(SQLiteDatabase db, String subreddit) {
         List<Submission> submissions = new ArrayList<>();
         String[] projection = {SubmissionsContract.SubmissionEntry.COLUMN_NAME_JSON};
+        String whereClause = SubmissionsContract.SubmissionEntry.COLUMN_NAME_SUBREDDIT +
+                "=?";
+        String[] whereArgs = {subreddit};
         String sortOrder = SubmissionsContract.SubmissionEntry._ID + " ASC";
-        Cursor c = db.query(SubmissionsContract.SubmissionEntry.TABLE_NAME, projection, null,
-                null, null, null, sortOrder);
+        Cursor c = db.query(SubmissionsContract.SubmissionEntry.TABLE_NAME, projection, whereClause,
+                whereArgs, null, null, sortOrder);
         while (c.moveToNext()) {
             int jsonColIndex = c.getColumnIndex(SubmissionsContract.SubmissionEntry.COLUMN_NAME_JSON);
             String json = c.getString(jsonColIndex);
@@ -107,6 +121,7 @@ public class SubmissionDbHelper extends SQLiteOpenHelper {
         return submissions;
     }
 
+
     /**
      * Gets the list of unique subreddits from the given {@code SQLiteDatabase}.
      *
@@ -116,8 +131,9 @@ public class SubmissionDbHelper extends SQLiteOpenHelper {
     public List<String> getSubreddits(SQLiteDatabase db) {
         List<String> subreddits = new ArrayList<>();
         String[] projection = {SubmissionsContract.SubmissionEntry.COLUMN_NAME_SUBREDDIT};
+        String sortOrder = SubmissionsContract.SubmissionEntry.COLUMN_NAME_SUBREDDIT + " ASC";
         Cursor c = db.query(true, SubmissionsContract.SubmissionEntry.TABLE_NAME, projection, null,
-                null, null, null, null, null);
+                null, null, null, sortOrder, null);
         while (c.moveToNext()) {
             int subIndex = c.getColumnIndex(SubmissionsContract.SubmissionEntry.COLUMN_NAME_SUBREDDIT);
             subreddits.add(c.getString(subIndex));

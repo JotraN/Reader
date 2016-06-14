@@ -20,20 +20,28 @@ import android.widget.ProgressBar;
 
 import net.dean.jraw.models.Submission;
 
+import java.util.Collection;
 import java.util.List;
 
 import io.github.jotran.reader.R;
 import io.github.jotran.reader.presenter.SubmissionsPresenter;
 import io.github.jotran.reader.view.activity.LoginActivity;
-import io.github.jotran.reader.view.activity.SubmissionsActivity;
+import io.github.jotran.reader.view.activity.MainActivity;
 import io.github.jotran.reader.view.adapter.SubmissionsRecyclerAdapter;
 
 public class SubmissionsFragment extends Fragment implements
         SubmissionsPresenter.SubmissionsView {
+    public static final String SUBREDDIT = "SUBREDDIT";
     private RecyclerView mRecyclerView;
     private SubmissionsRecyclerAdapter mAdapter;
     private ProgressBar mProgressBar;
     private SubmissionsPresenter mPresenter;
+    private SubmissionsFragmentListener mListener;
+    private String mSubreddit;
+
+    public interface SubmissionsFragmentListener {
+        void onSubmissionsLoaded(Collection<String> subreddits);
+    }
 
     public SubmissionsFragment() {
     }
@@ -48,14 +56,10 @@ public class SubmissionsFragment extends Fragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_main, container, false);
+        if (getArguments() != null && getArguments().containsKey(SUBREDDIT))
+            mSubreddit = getArguments().getString(SUBREDDIT);
 
-        SwipeRefreshLayout swipeRefreshLayout = (SwipeRefreshLayout)
-                v.findViewById(R.id.swipeSaved);
-        swipeRefreshLayout.setOnRefreshListener(() -> {
-            mPresenter.downloadSubmissions();
-            swipeRefreshLayout.setRefreshing(false);
-        });
+        View v = inflater.inflate(R.layout.fragment_main, container, false);
         mProgressBar = (ProgressBar) v.findViewById(R.id.progressBar);
         mRecyclerView = (RecyclerView) v.findViewById(R.id.recyclerView);
         mRecyclerView.setHasFixedSize(true);
@@ -63,8 +67,29 @@ public class SubmissionsFragment extends Fragment implements
                 new LinearLayoutManager(getActivity(),
                         LinearLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(layoutManager);
+        SwipeRefreshLayout swipeRefreshLayout = (SwipeRefreshLayout)
+                v.findViewById(R.id.swipeSaved);
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            refreshDownloads();
+            swipeRefreshLayout.setRefreshing(false);
+        });
+
+        // TODO Decouple this from this fragment/don't do this every time.
         mPresenter.authenticate();
         return v;
+    }
+
+    private void refreshDownloads() {
+        // If end of recycler is visible at the top, try looking on the next page for more items.
+        if (endOfRecycler() && !mProgressBar.isShown())
+            mPresenter.downloadNextSubmissions(mSubreddit);
+        else
+            mPresenter.downloadSubmissions(mSubreddit);
+    }
+
+    private boolean endOfRecycler() {
+        LinearLayoutManager lm = (LinearLayoutManager) mRecyclerView.getLayoutManager();
+        return lm.getItemCount() - 1 == lm.findLastVisibleItemPosition();
     }
 
     @Override
@@ -80,7 +105,7 @@ public class SubmissionsFragment extends Fragment implements
                 logout();
                 return true;
             case R.id.action_sync:
-                mPresenter.downloadSubmissions();
+                mPresenter.downloadSubmissions(mSubreddit);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -95,6 +120,11 @@ public class SubmissionsFragment extends Fragment implements
             mPresenter.authenticate(url);
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void showAuthenticated() {
+        mPresenter.downloadSubmissions(mSubreddit);
     }
 
     @Override
@@ -119,19 +149,21 @@ public class SubmissionsFragment extends Fragment implements
                 boolean bottomReached = totalItems <=
                         (visibleItems + pastVisibleItems);
                 if (bottomReached && !mProgressBar.isShown())
-                    mPresenter.downloadNextSubmissions();
+                    mPresenter.downloadNextSubmissions(mSubreddit);
             }
         });
     }
 
     @Override
     public void showMoreSubmissions(List<Submission> submissions) {
-        if (mAdapter != null) mAdapter.addSubmissions(submissions);
+        if (mAdapter != null)
+            mAdapter.addSubmissions(submissions);
     }
 
     @Override
-    public void showSubreddits(List<String> subreddits) {
-       // TODO Implement
+    public void showSubreddits(Collection<String> subreddits) {
+        if (mListener != null)
+            mListener.onSubmissionsLoaded(subreddits);
     }
 
     @Override
@@ -146,7 +178,7 @@ public class SubmissionsFragment extends Fragment implements
     }
 
     private void loadSubmission(Submission submission) {
-        Uri uri = Uri.parse("http://reddit.com/" + submission.getPermalink());
+        Uri uri = Uri.parse(submission.getShortURL());
         startActivity(new Intent(Intent.ACTION_VIEW).setData(uri));
     }
 
@@ -159,10 +191,13 @@ public class SubmissionsFragment extends Fragment implements
     private void logout() {
         mRecyclerView.setVisibility(View.GONE);
         SharedPreferences prefs = getActivity()
-                .getSharedPreferences(SubmissionsActivity.PREFS_NAME, 0);
+                .getSharedPreferences(MainActivity.PREFS_NAME, 0);
         prefs.edit().clear().apply();
         mPresenter.logout();
         mPresenter.authenticate();
     }
 
+    public void setSubmissionsFragmentListener(SubmissionsFragmentListener listener) {
+        mListener = listener;
+    }
 }
