@@ -80,16 +80,7 @@ public class SubmissionsFragment extends Fragment implements
     }
 
     private void refreshDownloads() {
-        // If end of recycler is visible at the top, try looking on the next page for more items.
-        if (endOfRecycler() && !mProgressBar.isShown())
-            mPresenter.downloadNextSubmissions(mSubreddit);
-        else
-            mPresenter.downloadSubmissions(mSubreddit);
-    }
-
-    private boolean endOfRecycler() {
-        LinearLayoutManager lm = (LinearLayoutManager) mRecyclerView.getLayoutManager();
-        return lm.getItemCount() - 1 == lm.findLastVisibleItemPosition();
+        mPresenter.downloadSubmissions(mSubreddit);
     }
 
     @Override
@@ -101,11 +92,14 @@ public class SubmissionsFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_logout:
-                logout();
-                return true;
             case R.id.action_sync:
                 mPresenter.downloadSubmissions(mSubreddit);
+                return true;
+            case R.id.action_dl_next:
+                mPresenter.downloadNextSubmissions(mSubreddit);
+                return true;
+            case R.id.action_logout:
+                logout();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

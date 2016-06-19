@@ -6,5 +6,6 @@
     <string name="submission_vote">001</string>
 
     <string name="menu_sync">Sync</string>
+    <string name="menu_dl_next">Next Page</string>
     <string name="menu_logout">Logout</string>
 </resources>

@@ -11,6 +11,7 @@ public class UserHistoryPaginator extends GenericPaginator {
                                 String username) {
         super(creator, Submission.class, where);
         this.username = username;
+        setLimit(RECOMMENDED_MAX_LIMIT);
     }
 
     @Override

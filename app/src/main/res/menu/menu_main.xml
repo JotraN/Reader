@@ -1,15 +1,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:app="http://schemas.android.com/apk/res-auto"
-      xmlns:tools="http://schemas.android.com/tools"
-      tools:context=".view.activity.MainActivity">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_sync"
         android:orderInCategory="1"
         android:title="@string/menu_sync"
-        app:showAsAction="never"/>
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_dl_next"
+        android:orderInCategory="1"
+        android:title="@string/menu_dl_next"
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_logout"
         android:orderInCategory="2"
         android:title="@string/menu_logout"
-        app:showAsAction="never"/>
+        app:showAsAction="never" />
 </menu>
