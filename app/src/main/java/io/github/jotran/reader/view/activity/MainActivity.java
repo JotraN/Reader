@@ -1,6 +1,8 @@
 package io.github.jotran.reader.view.activity;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -20,6 +22,7 @@ import io.github.jotran.reader.R;
 import io.github.jotran.reader.view.fragment.SubmissionsFragment;
 
 public class MainActivity extends AppCompatActivity {
+    public static final String PREFS_REFRESH_TOKEN = "REFRESH_TOKEN";
     public static final String PREFS_NAME = "READER_PREFS";
     /**
      * The group used to identify menu items representing subreddits.
@@ -32,6 +35,15 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        SharedPreferences prefs = getSharedPreferences(MainActivity.PREFS_NAME, 0);
+        String refreshToken = prefs.getString(PREFS_REFRESH_TOKEN, null);
+        if (refreshToken == null) {
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finish();
+            return;
+        }
         ConnectivityManager cm = (ConnectivityManager) getApplicationContext()
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();

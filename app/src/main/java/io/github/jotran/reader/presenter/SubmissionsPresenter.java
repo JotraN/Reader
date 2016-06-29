@@ -12,22 +12,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import io.github.jotran.reader.model.DataManager;
 import io.github.jotran.reader.view.activity.MainActivity;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
-public class SubmissionsPresenter {
-    private final String PREFS_REFRESH_TOKEN = "REFRESH_TOKEN";
+public class SubmissionsPresenter extends BasePresenter {
     private SubmissionsView mView;
-    private DataManager mDataManager;
-    private Context mContext;
 
     public interface SubmissionsView {
         void showAuthenticated();
 
-        void showLogin(String authUrl);
+        void showLogin();
 
         void showSubmissions(List<Submission> submissions);
 
@@ -40,46 +36,23 @@ public class SubmissionsPresenter {
         void showError(Throwable e);
     }
 
-    public SubmissionsPresenter(SubmissionsView view, Context context) {
+    public SubmissionsPresenter(Context context, SubmissionsView view) {
+        super(context);
         mView = view;
-        mContext = context;
-        mDataManager = new DataManager();
     }
 
     /**
      * Attempts to authenticate the client.
      * Shows the login screen if the user is logged out.
      */
+    @Override
     public void authenticate() {
         SharedPreferences prefs = mContext
                 .getSharedPreferences(MainActivity.PREFS_NAME, 0);
-        String refreshToken = prefs.getString(PREFS_REFRESH_TOKEN, null);
+        String refreshToken = prefs.getString(MainActivity.PREFS_REFRESH_TOKEN, null);
         boolean loggedOut = refreshToken == null;
-        if (loggedOut) mView.showLogin(mDataManager.getAuthUrl());
+        if (loggedOut) mView.showLogin();
         else authenticateToken(refreshToken);
-    }
-
-    /**
-     * Authenticates the client using the given url.
-     * Saves the refresh token once authentication has succeeded.
-     *
-     * @param url the url to authenticate with
-     */
-    public void authenticate(String url) {
-        mView.showProgressIndicator(true);
-        mDataManager.authenticateUrl(url)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(refreshToken -> {
-                    if (refreshToken != null) {
-                        SharedPreferences prefs = mContext
-                                .getSharedPreferences(MainActivity.PREFS_NAME, 0);
-                        prefs.edit().putString(PREFS_REFRESH_TOKEN, refreshToken)
-                                .apply();
-                        mView.showAuthenticated();
-                    } else
-                        mView.showError(new Exception("Authentication failed."));
-                });
     }
 
     /**
@@ -109,7 +82,9 @@ public class SubmissionsPresenter {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(loggedOut -> {
                     mView.showProgressIndicator(false);
-                    if (!loggedOut)
+                    if (loggedOut)
+                        mView.showLogin();
+                    else
                         mView.showError(new Exception("Logging out failed."));
                 });
     }
@@ -146,6 +121,7 @@ public class SubmissionsPresenter {
      * @param subreddit   the subreddit to filter by
      * @return the list of filtered submissions
      */
+    // TODO Use DataManager to filter.
     private List<Submission> filterSubmissions(List<Submission> submissions, String subreddit) {
         List<Submission> filteredSubmissions = new ArrayList<>();
         for (Submission submission : submissions)
@@ -170,8 +146,10 @@ public class SubmissionsPresenter {
                     public void onNext(List<Submission> submissions) {
                         if (subreddit != null)
                             mView.showMoreSubmissions(filterSubmissions(submissions, subreddit));
-                        else
+                        else {
+                            downloadSubreddits(submissions);
                             mView.showMoreSubmissions(submissions);
+                        }
                     }
                 });
     }

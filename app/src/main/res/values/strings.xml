@@ -8,4 +8,8 @@
     <string name="menu_sync">Sync</string>
     <string name="menu_dl_next">Next Page</string>
     <string name="menu_logout">Logout</string>
+
+    <string name="btn_login">login</string>
+    <!--TODO Reference this.-->
+    <string name="image_splash_src">https://unsplash.com/photos/Ood1Ob1hGwE</string>
 </resources>

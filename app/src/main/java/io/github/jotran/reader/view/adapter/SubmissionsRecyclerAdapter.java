@@ -55,7 +55,7 @@ public class SubmissionsRecyclerAdapter extends
     public void onBindViewHolder(ViewHolder holder, int position) {
         Submission submission = mSubmissions.get(position);
         holder.mTitleTv.setText(submission.getTitle());
-        holder.mDateTv.setText(submission.getCreatedUtc().toString());
+        holder.mDateTv.setText(submission.getCreated().toString());
         holder.mScoreTv.setText(submission.getScore().toString());
     }
 

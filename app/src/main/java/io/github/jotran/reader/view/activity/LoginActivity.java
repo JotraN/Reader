@@ -1,55 +1,39 @@
 package io.github.jotran.reader.view.activity;
 
 import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.webkit.CookieManager;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 
 import io.github.jotran.reader.R;
-import io.github.jotran.reader.model.JrawReaderHelper;
+import io.github.jotran.reader.view.fragment.LoginFragment;
+import io.github.jotran.reader.view.fragment.SplashFragment;
 
-public class LoginActivity extends AppCompatActivity {
-    public static final int REQUEST_CODE = 1;
-    public static final String LOGIN_URL = "LOGIN_URL";
-    public static final String RETURN_URL = "RETURN_URL";
+public class LoginActivity extends AppCompatActivity
+        implements SplashFragment.SplashFragmentListener, LoginFragment.LoginFragmentListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTheme(R.style.AppTheme);
         setContentView(R.layout.activity_login);
-        final Intent intent = getIntent();
-        String authUrl = intent.getStringExtra(LoginActivity.LOGIN_URL);
-
-        WebView webView = (WebView) findViewById(R.id.webview);
-        // TODO For some reason ide is showing a warning when this is not here.
-        if(webView == null) return;
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (Uri.parse(url).getHost().equals(Uri
-                        .parse(JrawReaderHelper.REDIRECT_URL).getHost())) {
-                    Intent returnIntent = new Intent();
-                    returnIntent.putExtra(LoginActivity.RETURN_URL, url);
-                    setResult(RESULT_OK, returnIntent);
-                    finish();
-                    return true;
-                }
-                return false;
-            }
-        });
-
-        clearCookies();
-        webView.loadUrl(authUrl);
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.login_fragment_container, new SplashFragment()).commit();
     }
 
-    private void clearCookies() {
-        CookieManager cookieManager = CookieManager.getInstance();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            cookieManager.removeAllCookies(null);
-        } else cookieManager.removeAllCookie();
+    @Override
+    public void onLoginBtnPressed() {
+        Bundle args = new Bundle();
+        LoginFragment loginFragment = new LoginFragment();
+        loginFragment.setArguments(args);
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.login_fragment_container, loginFragment).addToBackStack(null).commit();
+    }
+
+    @Override
+    public void onLoggedIn() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
     }
 }

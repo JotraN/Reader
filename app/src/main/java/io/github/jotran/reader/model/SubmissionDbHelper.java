@@ -8,8 +8,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import net.dean.jraw.JrawUtils;
 import net.dean.jraw.models.Submission;
+import net.dean.jraw.util.JrawUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,7 +79,7 @@ public class SubmissionDbHelper extends SQLiteOpenHelper {
         values.put(SubmissionsContract.SubmissionEntry.COLUMN_NAME_TITLE, submission.getTitle());
         values.put(SubmissionsContract.SubmissionEntry.COLUMN_NAME_SUBREDDIT, submission.getSubredditName());
         values.put(SubmissionsContract.SubmissionEntry.COLUMN_NAME_SCORE, submission.getScore());
-        values.put(SubmissionsContract.SubmissionEntry.COLUMN_NAME_DATE_SUBMITTED, submission.getCreatedUtc().toString());
+        values.put(SubmissionsContract.SubmissionEntry.COLUMN_NAME_DATE_SUBMITTED, submission.getCreated().toString());
         values.put(SubmissionsContract.SubmissionEntry.COLUMN_NAME_JSON, submission.getDataNode().toString());
         db.insert(SubmissionsContract.SubmissionEntry.TABLE_NAME, null, values);
     }
