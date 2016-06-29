@@ -1,6 +1,5 @@
 package io.github.jotran.reader.view.fragment;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -50,7 +49,7 @@ public class SubmissionsFragment extends Fragment implements
     public void onCreate(Bundle savedInstance) {
         super.onCreate(savedInstance);
         setHasOptionsMenu(true);
-        mPresenter = new SubmissionsPresenter(this, getContext());
+        mPresenter = new SubmissionsPresenter(getContext(), this);
     }
 
     @Override
@@ -73,8 +72,6 @@ public class SubmissionsFragment extends Fragment implements
             refreshDownloads();
             swipeRefreshLayout.setRefreshing(false);
         });
-
-        // TODO Decouple this from this fragment/don't do this every time.
         mPresenter.authenticate();
         return v;
     }
@@ -107,23 +104,16 @@ public class SubmissionsFragment extends Fragment implements
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == LoginActivity.REQUEST_CODE
-                && resultCode == Activity.RESULT_OK && data != null) {
-            String url = data.getExtras().getString(LoginActivity.RETURN_URL);
-            mPresenter.authenticate(url);
-        }
-        super.onActivityResult(requestCode, resultCode, data);
-    }
-
-    @Override
     public void showAuthenticated() {
         mPresenter.downloadSubmissions(mSubreddit);
     }
 
     @Override
-    public void showLogin(String authUrl) {
-        login(authUrl);
+    public void showLogin() {
+        Intent intent = new Intent(getContext(), LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        getActivity().finish();
     }
 
     @Override
@@ -176,19 +166,12 @@ public class SubmissionsFragment extends Fragment implements
         startActivity(new Intent(Intent.ACTION_VIEW).setData(uri));
     }
 
-    private void login(String authUrl) {
-        Intent intent = new Intent(getContext(), LoginActivity.class);
-        intent.putExtra(LoginActivity.LOGIN_URL, authUrl);
-        startActivityForResult(intent, LoginActivity.REQUEST_CODE);
-    }
-
     private void logout() {
         mRecyclerView.setVisibility(View.GONE);
         SharedPreferences prefs = getActivity()
                 .getSharedPreferences(MainActivity.PREFS_NAME, 0);
         prefs.edit().clear().apply();
         mPresenter.logout();
-        mPresenter.authenticate();
     }
 
     public void setSubmissionsFragmentListener(SubmissionsFragmentListener listener) {
