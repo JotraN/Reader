@@ -1,5 +1,7 @@
 package io.github.jotran.reader.model;
 
+import android.content.Context;
+
 import net.dean.jraw.http.oauth.OAuthException;
 import net.dean.jraw.models.Submission;
 
@@ -9,9 +11,16 @@ import rx.Observable;
 
 public class DataManager {
     private JrawReaderHelper mJrawHelper;
+    private SubmissionDbHelper mDbHelper;
 
-    public DataManager() {
-        mJrawHelper = new JrawReaderHelper();
+    /**
+     * Constructor for a {@code DataManager}.
+     *
+     * @param context the application context used to access the app's database
+     */
+    public DataManager(Context context) {
+        mJrawHelper = JrawReaderHelper.getInstance();
+        mDbHelper = new SubmissionDbHelper(context);
     }
 
     /**
@@ -21,6 +30,22 @@ public class DataManager {
      */
     public String getAuthUrl() {
         return mJrawHelper.getAuthUrl();
+    }
+
+    /**
+     * Determines whether the client is authenticated.
+     *
+     * @return true if the client is authenticated
+     */
+    public boolean isAuthenticated() {
+        return mJrawHelper.isAuthenticated();
+    }
+
+    /**
+     * Clears any data stored in the application's database.
+     */
+    public void clear() {
+        mDbHelper.reset();
     }
 
     /**
@@ -67,25 +92,50 @@ public class DataManager {
     }
 
     /**
-     * Gets the deferred observable used for downloading the first page of
-     * saved submissions.
+     * Gets the deferred observable used for downloading saved submissions.
+     *
+     * @return the deferred observable used for downloading saved submissions
+     */
+    public Observable<List<Submission>> downloadSubmissions() {
+        return Observable.defer(() -> Observable.concat(downloadDbSubmissions(),
+                downloadNetworkSubmissions()).first(submissions -> !submissions.isEmpty()));
+    }
+
+    /**
+     * Gets the deferred observable used for downloading saved submissions from the stored database.
+     * <p>
+     * The page of submissions are added to the database on next.
      *
      * @return the deferred observable used for downloading the first page of
      * saved submissions
      */
-    public Observable<List<Submission>> downloadSubmissions() {
-        return Observable.defer(() -> Observable.just(mJrawHelper.download()));
+    public Observable<List<Submission>> downloadDbSubmissions() {
+        return Observable.defer(() -> Observable.just(mDbHelper.getSubmissions()));
+    }
+
+    /**
+     * Gets the deferred observable used for downloading the first page of
+     * saved submissions from the client.
+     *
+     * @return the deferred observable used for downloading the first page of
+     * saved submissions
+     */
+    public Observable<List<Submission>> downloadNetworkSubmissions() {
+        return Observable.defer(() -> Observable.just(mJrawHelper.download())
+                .doOnNext(submissions -> mDbHelper.addSubmissions(submissions)));
     }
 
     /**
      * Gets the deferred observable used for downloading the next page of
-     * saved submissions.
+     * saved submissions from the client.
+     * <p>
+     * The page of submissions are added to the database on next.
      *
      * @return the deferred observable used for downloading the next page of
      * saved submissions
      */
     public Observable<List<Submission>> downloadNextSubmissions() {
-        return Observable.defer(() ->
-                Observable.just(mJrawHelper.downloadNext()));
+        return Observable.defer(() -> Observable.just(mJrawHelper.downloadNext())
+                .doOnNext(submissions -> mDbHelper.addSubmissions(submissions)));
     }
 }

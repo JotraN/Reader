@@ -22,9 +22,7 @@ public class LoginActivity extends AppCompatActivity
 
     @Override
     public void onLoginBtnPressed() {
-        Bundle args = new Bundle();
         LoginFragment loginFragment = new LoginFragment();
-        loginFragment.setArguments(args);
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.login_fragment_container, loginFragment).addToBackStack(null).commit();
     }

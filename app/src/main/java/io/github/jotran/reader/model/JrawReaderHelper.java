@@ -14,13 +14,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JrawReaderHelper {
+    private static JrawReaderHelper mInstance = new JrawReaderHelper();
     public static final String REDIRECT_URL = "http://127.0.0.1";
     private Credentials mCredentials;
     private OAuthHelper mOAuthHelper;
     private RedditClient mRedditClient;
     private UserHistoryPaginator mPaginator;
 
-    public JrawReaderHelper() {
+    /**
+     * Gets the current instance of the {@code JrawReaderHelper}, since {@code JrawReaderHelper} is
+     * a singleton.
+     *
+     * @return the current instance of the {@code JrawReaderHelper}
+     */
+    public static JrawReaderHelper getInstance() {
+        return mInstance;
+    }
+
+    private JrawReaderHelper() {
         UserAgent myUserAgent = UserAgent.of("mobile", "io.github.jotran.reader",
                 "v0.1", "reader-app");
         mRedditClient = new RedditClient(myUserAgent);
@@ -37,6 +48,15 @@ public class JrawReaderHelper {
     public String getAuthUrl() {
         return mOAuthHelper.getAuthorizationUrl(mCredentials, true, true,
                 "identity history").toString();
+    }
+
+    /**
+     * Determines whether the client is authenticated.
+     *
+     * @return true if the client is authenticated
+     */
+    public boolean isAuthenticated() {
+        return mRedditClient.isAuthenticated();
     }
 
     /**

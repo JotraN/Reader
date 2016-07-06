@@ -47,6 +47,12 @@ public class SubmissionsPresenter extends BasePresenter {
      */
     @Override
     public void authenticate() {
+        if (mDataManager.isAuthenticated()) {
+            mView.showAuthenticated();
+            return;
+        }
+        // Always clear data when first authenticating.
+        mDataManager.clear();
         SharedPreferences prefs = mContext
                 .getSharedPreferences(MainActivity.PREFS_NAME, 0);
         String refreshToken = prefs.getString(MainActivity.PREFS_REFRESH_TOKEN, null);

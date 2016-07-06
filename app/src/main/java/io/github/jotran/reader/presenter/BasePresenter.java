@@ -8,7 +8,7 @@ import io.github.jotran.reader.model.DataManager;
  * Base presenter used by the Reader app.
  * <p>
  * Requires the implementation of authenticate, since all presenters need to authenticate the
- * reddit client before using it.
+ * client before using it.
  */
 public abstract class BasePresenter {
     protected DataManager mDataManager;
@@ -16,7 +16,7 @@ public abstract class BasePresenter {
 
     public BasePresenter(Context context) {
         mContext = context;
-        mDataManager = new DataManager();
+        mDataManager = new DataManager(context);
     }
 
     /**

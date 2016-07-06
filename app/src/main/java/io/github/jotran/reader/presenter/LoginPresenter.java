@@ -24,11 +24,20 @@ public class LoginPresenter extends BasePresenter {
     }
 
     /**
-     * Shows the login screen for the user to authenticate the client.
+     * Attempts to authenticate the client.
+     * Shows the login screen if the user is logged out.
      */
-    @Override
+    // TODO Duplicated code from SubmissionsPresenter.
     public void authenticate() {
-        mView.showLogin(mDataManager.getAuthUrl());
+        // Always clear data when first authenticating.
+        mDataManager.clear();
+        SharedPreferences prefs = mContext
+                .getSharedPreferences(MainActivity.PREFS_NAME, 0);
+        String refreshToken = prefs.getString(MainActivity.PREFS_REFRESH_TOKEN, null);
+        boolean loggedOut = refreshToken == null;
+        if (loggedOut)
+            mView.showLogin(mDataManager.getAuthUrl());
+        else authenticateToken(refreshToken);
     }
 
     /**
@@ -50,6 +59,22 @@ public class LoginPresenter extends BasePresenter {
                         mView.showAuthenticated();
                     } else
                         mView.showError(new Exception("User authentication failed."));
+                });
+    }
+
+    /**
+     * Authenticates the client using the given refresh token.
+     *
+     * @param refreshToken the refresh token to use
+     */
+    // TODO Duplicated code from SubmissionsPresenter.
+    private void authenticateToken(String refreshToken) {
+        mDataManager.authenticateToken(refreshToken)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(authenticated -> {
+                    if (authenticated) mView.showAuthenticated();
+                    else mView.showError(new Exception("Authentication failed."));
                 });
     }
 }

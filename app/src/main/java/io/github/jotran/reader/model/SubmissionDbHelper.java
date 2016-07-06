@@ -48,24 +48,24 @@ public class SubmissionDbHelper extends SQLiteOpenHelper {
 
     /**
      * Resets the given {@code SQLiteDatabase} to a new state.
-     *
-     * @param db the {@code SQLiteDatabase} to reset
      */
-    public void reset(SQLiteDatabase db) {
+    public void reset() {
+        SQLiteDatabase db = getReadableDatabase();
         db.execSQL(SQL_DELETE_TASKS_ENTRIES);
         db.execSQL(SQL_CREATE_TASKS_ENTRIES);
     }
 
     /**
-     * Adds the given list of {@code Submission}s to the given {@code SQLiteDatabase}.
+     * Adds the given list of {@code Submission}s to the submissions database.
      *
-     * @param db          the {@code SQLiteDatabase} to add to
      * @param submissions the list of {@code Submission}s to add
      */
-    public void addSubmissions(SQLiteDatabase db, List<Submission> submissions) {
+    public void addSubmissions(List<Submission> submissions) {
+        SQLiteDatabase db = getWritableDatabase();
         for (Submission submission : submissions) {
             addSubmission(db, submission);
         }
+        db.close();
     }
 
     /**
@@ -85,13 +85,15 @@ public class SubmissionDbHelper extends SQLiteOpenHelper {
     }
 
     /**
-     * Gets the list of {@code Submission}s from the given {@code SQLiteDatabase}.
+     * Gets the list of {@code Submission}s from the submissions database.
      *
-     * @param db the {@code SQLiteDatabase} to get {@code Submission}s from
-     * @return the list of {@code Submission}s found in the given {@code SQLiteDatabase}
+     * @return the list of {@code Submission}s found in the submissions database
      */
-    public List<Submission> getSubmissions(SQLiteDatabase db) {
-        return getSubmissions(db, "*");
+    public List<Submission> getSubmissions() {
+        SQLiteDatabase db = getReadableDatabase();
+        List<Submission> submissions = getSubmissions(db, null);
+        db.close();
+        return submissions;
     }
 
     /**
@@ -107,6 +109,10 @@ public class SubmissionDbHelper extends SQLiteOpenHelper {
         String whereClause = SubmissionsContract.SubmissionEntry.COLUMN_NAME_SUBREDDIT +
                 "=?";
         String[] whereArgs = {subreddit};
+        if (subreddit == null) {
+            whereClause = null;
+            whereArgs = null;
+        }
         String sortOrder = SubmissionsContract.SubmissionEntry._ID + " ASC";
         Cursor c = db.query(SubmissionsContract.SubmissionEntry.TABLE_NAME, projection, whereClause,
                 whereArgs, null, null, sortOrder);
@@ -120,7 +126,6 @@ public class SubmissionDbHelper extends SQLiteOpenHelper {
         c.close();
         return submissions;
     }
-
 
     /**
      * Gets the list of unique subreddits from the given {@code SQLiteDatabase}.
