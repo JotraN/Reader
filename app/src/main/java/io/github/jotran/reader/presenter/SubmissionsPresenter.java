@@ -6,13 +6,10 @@ import android.util.Log;
 
 import net.dean.jraw.models.Submission;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 import io.github.jotran.reader.view.activity.MainActivity;
+import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -25,9 +22,7 @@ public class SubmissionsPresenter extends BasePresenter {
 
         void showLogin();
 
-        void showSubmissions(List<Submission> submissions);
-
-        void showMoreSubmissions(List<Submission> submissions);
+        void showSubmission(Submission submission);
 
         void showSubreddits(Collection<String> subreddits);
 
@@ -107,33 +102,13 @@ public class SubmissionsPresenter extends BasePresenter {
         mDataManager.downloadSubmissions()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SubmissionsSubscriber() {
-                    @Override
-                    public void onNext(List<Submission> submissions) {
-                        if (subreddit != null)
-                            mView.showSubmissions(filterSubmissions(submissions, subreddit));
-                        else {
-                            downloadSubreddits(submissions);
-                            mView.showSubmissions(submissions);
-                        }
-                    }
-                });
-    }
-
-    /**
-     * Filters the given list of submissions by the given subreddit.
-     *
-     * @param submissions the list of submissions to filter
-     * @param subreddit   the subreddit to filter by
-     * @return the list of filtered submissions
-     */
-    // TODO Use DataManager to filter.
-    private List<Submission> filterSubmissions(List<Submission> submissions, String subreddit) {
-        List<Submission> filteredSubmissions = new ArrayList<>();
-        for (Submission submission : submissions)
-            if (submission.getSubredditName().equals(subreddit))
-                filteredSubmissions.add(submission);
-        return filteredSubmissions;
+                .doOnNext(submissions -> {
+                    if (subreddit == null) downloadSubreddits();
+                })
+                .flatMap(Observable::from)
+                .filter(submission -> subreddit == null ||
+                        submission.getSubredditName().equals(subreddit))
+                .subscribe(new SubmissionSubscriber());
     }
 
     /**
@@ -147,24 +122,32 @@ public class SubmissionsPresenter extends BasePresenter {
         mDataManager.downloadNextSubmissions()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SubmissionsSubscriber() {
-                    @Override
-                    public void onNext(List<Submission> submissions) {
-                        if (subreddit != null)
-                            mView.showMoreSubmissions(filterSubmissions(submissions, subreddit));
-                        else {
-                            downloadSubreddits(submissions);
-                            mView.showMoreSubmissions(submissions);
-                        }
-                    }
-                });
+                .doOnNext(submissions -> {
+                    if (subreddit == null) downloadSubreddits();
+                })
+                .flatMap(Observable::from)
+                .filter(submission -> subreddit == null ||
+                        submission.getSubredditName().equals(subreddit))
+                .subscribe(new SubmissionSubscriber());
+    }
+
+    /**
+     * Downloads the set of subreddits belonging to the current list of submissions.
+     */
+    private void downloadSubreddits() {
+        mDataManager.downloadSubreddits()
+                .subscribe(subreddits -> mView.showSubreddits(subreddits));
     }
 
     /**
      * Subscriber used to subscribe to a list of submissions.
      */
-    private abstract class SubmissionsSubscriber
-            extends Subscriber<List<Submission>> {
+    private class SubmissionSubscriber extends Subscriber<Submission> {
+
+        @Override
+        public void onNext(Submission submission) {
+            mView.showSubmission(submission);
+        }
 
         @Override
         public void onCompleted() {
@@ -179,13 +162,4 @@ public class SubmissionsPresenter extends BasePresenter {
         }
     }
 
-    /**
-     * Downloads the unique subreddits belonging to the submissions.
-     */
-    public void downloadSubreddits(List<Submission> submissions) {
-        Set<String> subreddits = new TreeSet<>();
-        for (Submission submission : submissions)
-            subreddits.add(submission.getSubredditName());
-        mView.showSubreddits(subreddits);
-    }
 }

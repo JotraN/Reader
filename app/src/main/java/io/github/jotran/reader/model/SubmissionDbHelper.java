@@ -13,6 +13,8 @@ import net.dean.jraw.util.JrawUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class SubmissionDbHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "Submissions.db";
@@ -91,31 +93,11 @@ public class SubmissionDbHelper extends SQLiteOpenHelper {
      */
     public List<Submission> getSubmissions() {
         SQLiteDatabase db = getReadableDatabase();
-        List<Submission> submissions = getSubmissions(db, null);
-        db.close();
-        return submissions;
-    }
-
-    /**
-     * Gets the list of {@code Submission}s from the given {@code SQLiteDatabase}.
-     *
-     * @param db        the {@code SQLiteDatabase} to get {@code Submission}s from
-     * @param subreddit the subreddit to filter with
-     * @return the list of {@code Submission}s found in the given {@code SQLiteDatabase}
-     */
-    public List<Submission> getSubmissions(SQLiteDatabase db, String subreddit) {
         List<Submission> submissions = new ArrayList<>();
         String[] projection = {SubmissionsContract.SubmissionEntry.COLUMN_NAME_JSON};
-        String whereClause = SubmissionsContract.SubmissionEntry.COLUMN_NAME_SUBREDDIT +
-                "=?";
-        String[] whereArgs = {subreddit};
-        if (subreddit == null) {
-            whereClause = null;
-            whereArgs = null;
-        }
         String sortOrder = SubmissionsContract.SubmissionEntry._ID + " ASC";
-        Cursor c = db.query(SubmissionsContract.SubmissionEntry.TABLE_NAME, projection, whereClause,
-                whereArgs, null, null, sortOrder);
+        Cursor c = db.query(SubmissionsContract.SubmissionEntry.TABLE_NAME, projection, null,
+                null, null, null, sortOrder);
         while (c.moveToNext()) {
             int jsonColIndex = c.getColumnIndex(SubmissionsContract.SubmissionEntry.COLUMN_NAME_JSON);
             String json = c.getString(jsonColIndex);
@@ -124,17 +106,20 @@ public class SubmissionDbHelper extends SQLiteOpenHelper {
             submissions.add(submission);
         }
         c.close();
+        db.close();
         return submissions;
     }
 
     /**
-     * Gets the list of unique subreddits from the given {@code SQLiteDatabase}.
+     * Gets the set of unique subreddits from the submissions database.
+     * <p>
+     * The set is in a case insensitive order.
      *
-     * @param db the {@code SQLiteDatabase} to get unique subreddits from
-     * @return the list of unqiue subreddits found in the given {@code SQLiteDatabase}
+     * @return the set of unqiue subreddits found in the submissions database
      */
-    public List<String> getSubreddits(SQLiteDatabase db) {
-        List<String> subreddits = new ArrayList<>();
+    public Set<String> getSubreddits() {
+        SQLiteDatabase db = getReadableDatabase();
+        Set<String> subreddits = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         String[] projection = {SubmissionsContract.SubmissionEntry.COLUMN_NAME_SUBREDDIT};
         String sortOrder = SubmissionsContract.SubmissionEntry.COLUMN_NAME_SUBREDDIT + " ASC";
         Cursor c = db.query(true, SubmissionsContract.SubmissionEntry.TABLE_NAME, projection, null,
@@ -144,6 +129,7 @@ public class SubmissionDbHelper extends SQLiteOpenHelper {
             subreddits.add(c.getString(subIndex));
         }
         c.close();
+        db.close();
         return subreddits;
     }
 }

@@ -6,6 +6,7 @@ import net.dean.jraw.http.oauth.OAuthException;
 import net.dean.jraw.models.Submission;
 
 import java.util.List;
+import java.util.Set;
 
 import rx.Observable;
 
@@ -137,5 +138,15 @@ public class DataManager {
     public Observable<List<Submission>> downloadNextSubmissions() {
         return Observable.defer(() -> Observable.just(mJrawHelper.downloadNext())
                 .doOnNext(submissions -> mDbHelper.addSubmissions(submissions)));
+    }
+
+    /**
+     * Gets the deferred observable used for downloading the set of subreddits built from the
+     * stored database's saved submissions.
+     *
+     * @return the deferred observable used for downloading the set of subreddits
+     */
+    public Observable<Set<String>> downloadSubreddits() {
+        return Observable.defer(() -> Observable.just(mDbHelper.getSubreddits()));
     }
 }

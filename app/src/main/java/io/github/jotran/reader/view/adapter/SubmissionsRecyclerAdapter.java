@@ -74,13 +74,12 @@ public class SubmissionsRecyclerAdapter extends
     }
 
     /**
-     * Adds the given list of submissions to the current.
+     * Add the given {@code Submission} to the current list of {@code Submission}s.
      *
-     * @param submissions the list of submissions to add
+     * @param submission the submission to add
      */
-    public void addSubmissions(List<Submission> submissions) {
-        for (Submission submission : submissions)
-            mSubmissions.add(submission);
+    public void addSubmissions(Submission submission) {
+        mSubmissions.add(submission);
         notifyDataSetChanged();
     }
 }

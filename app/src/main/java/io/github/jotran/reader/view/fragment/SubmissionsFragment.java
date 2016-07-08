@@ -19,8 +19,8 @@ import android.widget.ProgressBar;
 
 import net.dean.jraw.models.Submission;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import io.github.jotran.reader.R;
 import io.github.jotran.reader.presenter.SubmissionsPresenter;
@@ -59,19 +59,39 @@ public class SubmissionsFragment extends Fragment implements
             mSubreddit = getArguments().getString(SUBREDDIT);
 
         View v = inflater.inflate(R.layout.fragment_main, container, false);
-        mProgressBar = (ProgressBar) v.findViewById(R.id.progressBar);
-        mRecyclerView = (RecyclerView) v.findViewById(R.id.recyclerView);
-        mRecyclerView.setHasFixedSize(true);
-        RecyclerView.LayoutManager layoutManager =
-                new LinearLayoutManager(getActivity(),
-                        LinearLayoutManager.VERTICAL, false);
-        mRecyclerView.setLayoutManager(layoutManager);
+
         SwipeRefreshLayout swipeRefreshLayout = (SwipeRefreshLayout)
                 v.findViewById(R.id.swipeSaved);
         swipeRefreshLayout.setOnRefreshListener(() -> {
             refreshDownloads();
             swipeRefreshLayout.setRefreshing(false);
         });
+
+        mProgressBar = (ProgressBar) v.findViewById(R.id.progressBar);
+        mRecyclerView = (RecyclerView) v.findViewById(R.id.recyclerView);
+        mRecyclerView.setHasFixedSize(true);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity(),
+                LinearLayoutManager.VERTICAL, false);
+        mRecyclerView.setLayoutManager(layoutManager);
+        mAdapter = new SubmissionsRecyclerAdapter(new ArrayList<>());
+        mAdapter.setSubmissionsListener(this::loadSubmission);
+        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.setVisibility(View.VISIBLE);
+        mRecyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                LinearLayoutManager lm = (LinearLayoutManager)
+                        recyclerView.getLayoutManager();
+                int totalItems = lm.getItemCount();
+                int pastVisibleItems = lm.findFirstVisibleItemPosition();
+                int visibleItems = recyclerView.getChildCount();
+                boolean bottomReached = totalItems <=
+                        (visibleItems + pastVisibleItems);
+                if (bottomReached && !mProgressBar.isShown())
+                    mPresenter.downloadNextSubmissions(mSubreddit);
+            }
+        });
+
         mPresenter.authenticate();
         return v;
     }
@@ -117,31 +137,9 @@ public class SubmissionsFragment extends Fragment implements
     }
 
     @Override
-    public void showSubmissions(List<Submission> submissions) {
-        mAdapter = new SubmissionsRecyclerAdapter(submissions);
-        mAdapter.setSubmissionsListener(this::loadSubmission);
-        mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.setVisibility(View.VISIBLE);
-        mRecyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                LinearLayoutManager lm = (LinearLayoutManager)
-                        recyclerView.getLayoutManager();
-                int totalItems = lm.getItemCount();
-                int pastVisibleItems = lm.findFirstVisibleItemPosition();
-                int visibleItems = recyclerView.getChildCount();
-                boolean bottomReached = totalItems <=
-                        (visibleItems + pastVisibleItems);
-                if (bottomReached && !mProgressBar.isShown())
-                    mPresenter.downloadNextSubmissions(mSubreddit);
-            }
-        });
-    }
-
-    @Override
-    public void showMoreSubmissions(List<Submission> submissions) {
+    public void showSubmission(Submission submission) {
         if (mAdapter != null)
-            mAdapter.addSubmissions(submissions);
+            mAdapter.addSubmissions(submission);
     }
 
     @Override
