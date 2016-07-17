@@ -42,7 +42,7 @@ public class LoginPresenter extends BasePresenter {
 
     /**
      * Authenticates the client using the given url.
-     * Saves the refresh token once authentication has succeeded.
+     * Saves the refresh token and user name once authentication has succeeded.
      *
      * @param url the url to authenticate with
      */
@@ -54,8 +54,10 @@ public class LoginPresenter extends BasePresenter {
                     if (refreshToken != null) {
                         SharedPreferences prefs = mContext
                                 .getSharedPreferences(MainActivity.PREFS_NAME, 0);
-                        prefs.edit().putString(MainActivity.PREFS_REFRESH_TOKEN, refreshToken)
-                                .apply();
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putString(MainActivity.PREFS_REFRESH_TOKEN, refreshToken);
+                        editor.putString(MainActivity.PREFS_USER_NAME, mDataManager.getUserName());
+                        editor.apply();
                         mView.showAuthenticated();
                     } else
                         mView.showError(new Exception("User authentication failed."));

@@ -5,11 +5,11 @@
     <string name="submission_date">01–01–2001</string>
     <string name="submission_vote">001</string>
 
-    <string name="menu_sync">Sync</string>
-    <string name="menu_dl_next">Next Page</string>
+    <string name="menu_refresh">Refresh</string>
+    <string name="menu_dl_next">Download Next</string>
     <string name="menu_logout">Logout</string>
 
-    <string name="btn_login">login</string>
+    <string name="splash_message">Tap to start.</string>
     <!--TODO Reference this.-->
-    <string name="image_splash_src">https://unsplash.com/photos/Ood1Ob1hGwE</string>
+    <string name="image_splash_src">https://unsplash.com/photos/HWIOLU7_O6w/</string>
 </resources>

@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.DrawerLayout;
@@ -15,6 +16,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.widget.TextView;
 
 import java.util.Collection;
 
@@ -23,7 +25,10 @@ import io.github.jotran.reader.view.fragment.SubmissionsFragment;
 
 public class MainActivity extends AppCompatActivity {
     public static final String PREFS_REFRESH_TOKEN = "REFRESH_TOKEN";
+    public static final String PREFS_USER_NAME = "USER_NAME";
     public static final String PREFS_NAME = "READER_PREFS";
+
+    private CollapsingToolbarLayout mCollapsingToolbar;
     /**
      * The group used to identify menu items representing subreddits.
      */
@@ -35,6 +40,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        mCollapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
+
         SharedPreferences prefs = getSharedPreferences(MainActivity.PREFS_NAME, 0);
         String refreshToken = prefs.getString(PREFS_REFRESH_TOKEN, null);
         if (refreshToken == null) {
@@ -43,6 +50,13 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
             return;
+        }
+        String userName = prefs.getString(PREFS_USER_NAME, null);
+        if(userName != null){
+            NavigationView navView = (NavigationView) findViewById(R.id.nav_view);
+            TextView navHeaderText = (TextView) navView.getHeaderView(0).findViewById(R.id.nav_header_text);
+            navHeaderText.setText(userName);
+
         }
         ConnectivityManager cm = (ConnectivityManager) getApplicationContext()
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -65,6 +79,11 @@ public class MainActivity extends AppCompatActivity {
      *                  subreddit is necessary
      */
     private void setSubFragment(String subreddit) {
+        if (mCollapsingToolbar != null) {
+            if (subreddit == null)
+                mCollapsingToolbar.setTitle(getResources().getString(R.string.app_name));
+            else mCollapsingToolbar.setTitle(subreddit);
+        }
         SubmissionsFragment fragment = new SubmissionsFragment();
         fragment.setSubmissionsFragmentListener(this::setupNavMenu);
         if (subreddit != null) {

@@ -91,6 +91,16 @@ public class SubmissionsPresenter extends BasePresenter {
     }
 
     /**
+     * Refreshes the current list of saved submissions.
+     *
+     * @param subreddit the subreddit used to filter the list of saved submissions
+     */
+    public void refreshSubmissions(String subreddit) {
+        mDataManager.clear();
+        downloadSubmissions(subreddit);
+    }
+
+    /**
      * Downloads the first page of saved submissions, filtering the submissions by the given
      * subreddit.
      *
@@ -161,5 +171,4 @@ public class SubmissionsPresenter extends BasePresenter {
             Log.e("Presenter Error", "Submission Download", e);
         }
     }
-
 }

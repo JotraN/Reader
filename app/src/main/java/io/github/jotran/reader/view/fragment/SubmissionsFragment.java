@@ -63,7 +63,7 @@ public class SubmissionsFragment extends Fragment implements
         SwipeRefreshLayout swipeRefreshLayout = (SwipeRefreshLayout)
                 v.findViewById(R.id.swipeSaved);
         swipeRefreshLayout.setOnRefreshListener(() -> {
-            refreshDownloads();
+            refreshSubmissions();
             swipeRefreshLayout.setRefreshing(false);
         });
 
@@ -96,10 +96,6 @@ public class SubmissionsFragment extends Fragment implements
         return v;
     }
 
-    private void refreshDownloads() {
-        mPresenter.downloadSubmissions(mSubreddit);
-    }
-
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
@@ -109,8 +105,8 @@ public class SubmissionsFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_sync:
-                mPresenter.downloadSubmissions(mSubreddit);
+            case R.id.action_refresh:
+                refreshSubmissions();
                 return true;
             case R.id.action_dl_next:
                 mPresenter.downloadNextSubmissions(mSubreddit);
@@ -157,6 +153,11 @@ public class SubmissionsFragment extends Fragment implements
     @Override
     public void showError(Throwable e) {
         Snackbar.make(getView(), e.getMessage(), Snackbar.LENGTH_SHORT).show();
+    }
+
+    private void refreshSubmissions() {
+        mAdapter.clear();
+        mPresenter.refreshSubmissions(mSubreddit);
     }
 
     private void loadSubmission(Submission submission) {

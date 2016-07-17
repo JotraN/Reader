@@ -10,14 +10,13 @@
         android:layout_height="match_parent"
         android:contentDescription="@null"
         android:scaleType="centerCrop"
-        android:src="@drawable/splash_bg" />
+        android:src="@drawable/splashscreen" />
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_splash"
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_account_circle_white_24dp" />
-
+        android:layout_gravity="center_horizontal|bottom"
+        android:paddingBottom="60dp"
+        android:text="@string/splash_message"
+        android:textColor="@android:color/white" />
 </FrameLayout>

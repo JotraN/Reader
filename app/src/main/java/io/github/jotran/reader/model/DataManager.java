@@ -43,6 +43,15 @@ public class DataManager {
     }
 
     /**
+     * Gets the user name associated with the authenticated client.
+     *
+     * @return gets the user name associated with the authenticated client
+     */
+    public String getUserName(){
+        return mJrawHelper.getUserName();
+    }
+
+    /**
      * Clears any data stored in the application's database.
      */
     public void clear() {

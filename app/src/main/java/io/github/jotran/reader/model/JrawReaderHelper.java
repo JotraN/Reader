@@ -136,4 +136,13 @@ public class JrawReaderHelper {
         }
         return submissions;
     }
+
+    /**
+     * Gets the user name associated with the authenticated user.
+     *
+     * @return the user name associated with the authenticated user
+     */
+    public String getUserName(){
+        return mRedditClient.getAuthenticatedUser();
+    }
 }

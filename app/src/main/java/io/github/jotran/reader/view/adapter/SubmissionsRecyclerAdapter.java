@@ -82,4 +82,12 @@ public class SubmissionsRecyclerAdapter extends
         mSubmissions.add(submission);
         notifyDataSetChanged();
     }
+
+    /**
+     * Clears the current list of {@code Submission}s.
+     */
+    public void clear(){
+        mSubmissions.clear();
+        notifyDataSetChanged();
+    }
 }
