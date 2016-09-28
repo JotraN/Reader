@@ -112,7 +112,8 @@ public class JrawReaderHelper {
                             account.getFullName());
             if (historyPaginator.hasNext()) {
                 for (Object submission : historyPaginator.next()) {
-                    submissions.add((Submission) submission);
+                    if(((Submission) submission).getTitle() != null)
+                        submissions.add((Submission) submission);
                 }
             }
             mPaginator = historyPaginator;
