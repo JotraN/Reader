@@ -12,4 +12,7 @@
     <string name="splash_message">Tap to start.</string>
     <!--TODO Reference this.-->
     <string name="image_splash_src">https://unsplash.com/photos/HWIOLU7_O6w/</string>
+
+    <string name="drawer_open">Open Drawer</string>
+    <string name="drawer_close">Close Drawer</string>
 </resources>

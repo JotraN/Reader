@@ -3,6 +3,7 @@ package io.github.jotran.reader.view.activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -29,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String PREFS_NAME = "READER_PREFS";
 
     private CollapsingToolbarLayout mCollapsingToolbar;
+    private ActionBarDrawerToggle mDrawerToggle;
     /**
      * The group used to identify menu items representing subreddits.
      */
@@ -41,6 +44,14 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         mCollapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
+        if(getSupportActionBar() != null) {
+            DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+            mDrawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
+                    R.string.drawer_open, R.string.drawer_close);
+            drawerLayout.setDrawerListener(mDrawerToggle);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setHomeButtonEnabled(true);
+        }
 
         SharedPreferences prefs = getSharedPreferences(MainActivity.PREFS_NAME, 0);
         String refreshToken = prefs.getString(PREFS_REFRESH_TOKEN, null);
@@ -56,7 +67,6 @@ public class MainActivity extends AppCompatActivity {
             NavigationView navView = (NavigationView) findViewById(R.id.nav_view);
             TextView navHeaderText = (TextView) navView.getHeaderView(0).findViewById(R.id.nav_header_text);
             navHeaderText.setText(userName);
-
         }
         ConnectivityManager cm = (ConnectivityManager) getApplicationContext()
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -131,5 +141,22 @@ public class MainActivity extends AppCompatActivity {
         item.setChecked(true);
         DrawerLayout mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (mDrawer != null) mDrawer.closeDrawers();
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        return mDrawerToggle.onOptionsItemSelected(item) || super.onOptionsItemSelected(item);
     }
 }
