@@ -5,9 +5,15 @@
     <string name="submission_date">01–01–2001</string>
     <string name="submission_vote">001</string>
 
+    <string name="menu_search">Search</string>
     <string name="menu_refresh">Refresh</string>
     <string name="menu_dl_next">Download Next</string>
     <string name="menu_logout">Logout</string>
+
+    <string name="search_title">Search submissions</string>
+    <string name="search_hint">Submission title</string>
+    <string name="search_button">Search</string>
+    <string name="search_cancel">Cancel</string>
 
     <string name="splash_message">Tap to start.</string>
     <!--TODO Reference this.-->

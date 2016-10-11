@@ -119,7 +119,7 @@ public class DataManager {
      * @return the deferred observable used for downloading the first page of
      * saved submissions
      */
-    public Observable<List<Submission>> downloadDbSubmissions() {
+    private Observable<List<Submission>> downloadDbSubmissions() {
         return Observable.defer(() -> Observable.just(mDbHelper.getSubmissions()));
     }
 
@@ -130,7 +130,7 @@ public class DataManager {
      * @return the deferred observable used for downloading the first page of
      * saved submissions
      */
-    public Observable<List<Submission>> downloadNetworkSubmissions() {
+    private Observable<List<Submission>> downloadNetworkSubmissions() {
         return Observable.defer(() -> Observable.just(mJrawHelper.download())
                 .doOnNext(submissions -> mDbHelper.addSubmissions(submissions)));
     }

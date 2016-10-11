@@ -2,6 +2,7 @@ package io.github.jotran.reader.presenter;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import net.dean.jraw.models.Submission;
@@ -116,8 +117,7 @@ public class SubmissionsPresenter extends BasePresenter {
                     if (subreddit == null) downloadSubreddits();
                 })
                 .flatMap(Observable::from)
-                .filter(submission -> subreddit == null ||
-                        submission.getSubredditName().equals(subreddit))
+                .filter(submission -> subredditMatched(subreddit, submission))
                 .subscribe(new SubmissionSubscriber());
     }
 
@@ -136,9 +136,19 @@ public class SubmissionsPresenter extends BasePresenter {
                     if (subreddit == null) downloadSubreddits();
                 })
                 .flatMap(Observable::from)
-                .filter(submission -> subreddit == null ||
-                        submission.getSubredditName().equals(subreddit))
+                .filter(submission -> subredditMatched(subreddit, submission))
                 .subscribe(new SubmissionSubscriber());
+    }
+
+    /**
+     * Determines if the given submission belongs to the given subreddit.
+     *
+     * @param subreddit  the targeted subreddit, a null subreddit always results in a match
+     * @param submission the submission to check
+     * @return true if the submission belongs to the subreddit
+     */
+    private boolean subredditMatched(String subreddit, Submission submission) {
+        return subreddit == null || submission.getSubredditName().equals(subreddit);
     }
 
     /**
@@ -147,6 +157,25 @@ public class SubmissionsPresenter extends BasePresenter {
     private void downloadSubreddits() {
         mDataManager.downloadSubreddits()
                 .subscribe(subreddits -> mView.showSubreddits(subreddits));
+    }
+
+    /**
+     * Searches the list of downloaded submissions for submissions that matches the given
+     * subreddit and submission title.
+     *
+     * @param subreddit the targeted subreddit, a null subreddit always results in a match
+     * @param title     the submission title to match
+     */
+    public void searchSubmissions(String subreddit, @NonNull String title) {
+        mView.showProgressIndicator(true);
+        mDataManager.downloadSubmissions()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .flatMap(Observable::from)
+                .filter(submission -> submission.getTitle().toLowerCase()
+                        .contains(title.toLowerCase())
+                        && (subredditMatched(subreddit, submission)))
+                .subscribe(new SubmissionSubscriber());
     }
 
     /**

@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -15,6 +16,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 
 import net.dean.jraw.models.Submission;
@@ -105,6 +107,9 @@ public class SubmissionsFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_search:
+                searchSubmissions();
+                return true;
             case R.id.action_refresh:
                 refreshSubmissions();
                 return true;
@@ -153,6 +158,20 @@ public class SubmissionsFragment extends Fragment implements
     @Override
     public void showError(Throwable e) {
         Snackbar.make(getView(), e.getMessage(), Snackbar.LENGTH_SHORT).show();
+    }
+
+    private void searchSubmissions() {
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        View view = inflater.inflate(R.layout.dialog_search, null);
+        final EditText inputText = (EditText) view.findViewById(R.id.edit_text_input);
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setView(view);
+        builder.setPositiveButton(R.string.search_button, (dialog, which) -> {
+            mAdapter.clear();
+            mPresenter.searchSubmissions(mSubreddit, inputText.getText().toString());
+        })
+                .setNegativeButton(R.string.search_cancel, (dialog, which) -> dialog.cancel());
+        builder.create().show();
     }
 
     private void refreshSubmissions() {
