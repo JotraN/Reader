@@ -19,6 +19,11 @@ public abstract class BasePresenter {
         mDataManager = new DataManager(context);
     }
 
+    public BasePresenter(Context context, DataManager dm) {
+        mContext = context;
+        mDataManager = dm;
+    }
+
     /**
      * Authenticates the client.
      */

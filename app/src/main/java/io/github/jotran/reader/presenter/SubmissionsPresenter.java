@@ -9,6 +9,7 @@ import net.dean.jraw.models.Submission;
 
 import java.util.Collection;
 
+import io.github.jotran.reader.model.DataManager;
 import io.github.jotran.reader.view.activity.MainActivity;
 import rx.Observable;
 import rx.Subscriber;
@@ -34,6 +35,11 @@ public class SubmissionsPresenter extends BasePresenter {
 
     public SubmissionsPresenter(Context context, SubmissionsView view) {
         super(context);
+        mView = view;
+    }
+
+    public SubmissionsPresenter(Context context, SubmissionsView view, DataManager dm) {
+        super(context, dm);
         mView = view;
     }
 
