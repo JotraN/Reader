@@ -6,7 +6,6 @@ import com.google.common.collect.Lists;
 
 import net.dean.jraw.models.Submission;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,6 +22,7 @@ import io.github.jotran.reader.util.RxSchedulersOverrideRule;
 import rx.Observable;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,23 +31,18 @@ public class SubmissionsPresenterTest {
     @Rule
     public final RxSchedulersOverrideRule mOverrideSchedulersRule = new RxSchedulersOverrideRule();
 
-    private List<String> subreddits = Lists.newArrayList("subreddit", "subreddit2");
-    private List<MockSubmission> mockSubmissions = Lists.newArrayList(
-            new MockSubmission("title", "author", "1", "subreddit"),
-            new MockSubmission("title2", "author2", "2", "subreddit2")
-    );
-
-
     @Mock
     private SubmissionsPresenter.SubmissionsView submissionsView;
 
     @Mock
     private DataManager dataManager;
 
+    private List<String> subreddits = Lists.newArrayList("subreddit", "subreddit2");
+    private List<MockSubmission> mockSubmissions = Lists.newArrayList(
+            new MockSubmission("title", "author", "1", "subreddit"),
+            new MockSubmission("title2", "author2", "2", "subreddit2")
+    );
     private SubmissionsPresenter presenter;
-
-    @Mock
-    private DataManager dm;
 
     @Before
     public void setUp() {
@@ -58,11 +53,12 @@ public class SubmissionsPresenterTest {
         presenter = new SubmissionsPresenter(Mockito.mock(Context.class), submissionsView, dataManager);
     }
 
-    @After
-    public void tearDown() {
+    private void verifyProgressAndNoError() {
         verify(submissionsView, times(1)).showProgressIndicator(true);
         verify(submissionsView, times(1)).showProgressIndicator(false);
+        verify(submissionsView, times(0)).showError(any(Throwable.class));
     }
+
 
     @Test
     public void downloadSubmissions() {
@@ -70,13 +66,15 @@ public class SubmissionsPresenterTest {
         verify(dataManager, times(1)).downloadSubmissions();
         verify(dataManager, times(1)).downloadSubreddits();
         verify(submissionsView, times(1)).showSubmission(mockSubmissions.get(0).getSubmission());
+        verifyProgressAndNoError();
     }
 
     @Test
     public void downloadSubredditSubmission() {
-        presenter.downloadSubmissions(subreddits.get(0));
+        presenter.downloadSubmissions(subreddits.get(1));
         verify(dataManager, times(1)).downloadSubmissions();
-        verify(submissionsView, times(1)).showSubmission(mockSubmissions.get(0).getSubmission());
+        verify(submissionsView, times(0)).showSubmission(any(Submission.class));
+        verifyProgressAndNoError();
     }
 
     @Test
@@ -84,6 +82,7 @@ public class SubmissionsPresenterTest {
         presenter.downloadSubmissions("missing_subreddit");
         verify(dataManager, times(1)).downloadSubmissions();
         verify(submissionsView, times(0)).showSubmission(any(Submission.class));
+        verifyProgressAndNoError();
     }
 
     @Test
@@ -92,6 +91,7 @@ public class SubmissionsPresenterTest {
         verify(dataManager, times(1)).downloadNextSubmissions();
         verify(dataManager, times(1)).downloadSubreddits();
         verify(submissionsView, times(1)).showSubmission(mockSubmissions.get(1).getSubmission());
+        verifyProgressAndNoError();
     }
 
     @Test
@@ -99,6 +99,7 @@ public class SubmissionsPresenterTest {
         presenter.downloadNextSubmissions(subreddits.get(1));
         verify(dataManager, times(1)).downloadNextSubmissions();
         verify(submissionsView, times(1)).showSubmission(mockSubmissions.get(1).getSubmission());
+        verifyProgressAndNoError();
     }
 
     @Test
@@ -106,6 +107,7 @@ public class SubmissionsPresenterTest {
         presenter.downloadNextSubmissions("missing_subreddit");
         verify(dataManager, times(1)).downloadNextSubmissions();
         verify(submissionsView, times(0)).showSubmission(any(Submission.class));
+        verifyProgressAndNoError();
     }
 
     @Test
@@ -114,6 +116,7 @@ public class SubmissionsPresenterTest {
         verify(dataManager, times(1)).downloadSubmissions();
         verify(dataManager, times(1)).downloadSubreddits();
         verify(submissionsView, times(1)).showSubreddits(new TreeSet<>(subreddits));
+        verifyProgressAndNoError();
     }
 
     @Test
@@ -122,6 +125,7 @@ public class SubmissionsPresenterTest {
         verify(dataManager, times(1)).downloadSubmissions();
         verify(dataManager, times(0)).downloadSubreddits();
         verify(submissionsView, times(1)).showSubmission(mockSubmissions.get(0).getSubmission());
+        verifyProgressAndNoError();
     }
 
     @Test
@@ -130,6 +134,7 @@ public class SubmissionsPresenterTest {
         verify(dataManager, times(1)).downloadSubmissions();
         verify(dataManager, times(0)).downloadSubreddits();
         verify(submissionsView, times(0)).showSubmission(any(Submission.class));
+        verifyProgressAndNoError();
     }
 
     @Test
@@ -138,6 +143,7 @@ public class SubmissionsPresenterTest {
         verify(dataManager, times(1)).downloadSubmissions();
         verify(dataManager, times(0)).downloadSubreddits();
         verify(submissionsView, times(1)).showSubmission(mockSubmissions.get(0).getSubmission());
+        verifyProgressAndNoError();
     }
 
     @Test
@@ -146,5 +152,64 @@ public class SubmissionsPresenterTest {
         verify(dataManager, times(1)).downloadSubmissions();
         verify(dataManager, times(0)).downloadSubreddits();
         verify(submissionsView, times(1)).showSubmission(mockSubmissions.get(0).getSubmission());
+        verifyProgressAndNoError();
+    }
+
+    @Test
+    public void loginWhenNoRefreshToken() {
+        when(dataManager.isAuthenticated()).thenReturn(false);
+        presenter.authenticate();
+        verify(dataManager, times(1)).clear();
+        verify(dataManager, times(1)).isAuthenticated();
+        verify(dataManager, times(0)).authenticateToken(anyObject());
+        verify(dataManager, times(0)).authenticateUrl(anyObject());
+        verify(submissionsView, times(0)).showAuthenticated();
+        verify(submissionsView, times(1)).showLogin();
+    }
+
+    @Test
+    public void skipAuthenticationWhenAlreadyAuthenticated() {
+        when(dataManager.isAuthenticated()).thenReturn(true);
+        presenter.authenticate();
+        verify(dataManager, times(0)).clear();
+        verify(dataManager, times(1)).isAuthenticated();
+        verify(dataManager, times(0)).authenticateToken(anyObject());
+        verify(dataManager, times(0)).authenticateUrl(anyObject());
+        verify(submissionsView, times(1)).showAuthenticated();
+        verify(submissionsView, times(0)).showLogin();
+    }
+
+    @Test
+    public void logout() {
+        when(dataManager.logout()).thenReturn(Observable.just(true));
+        presenter.logout();
+        verify(submissionsView, times(0)).showError(anyObject());
+        verify(submissionsView, times(1)).showLogin();
+    }
+
+    @Test
+    public void errorWhenLogoutFailed() {
+        when(dataManager.logout()).thenReturn(Observable.just(false));
+        presenter.logout();
+        verify(submissionsView, times(1)).showError(anyObject());
+        verify(submissionsView, times(0)).showLogin();
+    }
+
+    @Test
+    public void refresh() {
+        presenter.refreshSubmissions(null);
+        verify(dataManager, times(1)).clear();
+        verify(dataManager, times(1)).downloadSubmissions();
+        verify(submissionsView, times(1)).showSubmission(mockSubmissions.get(0).getSubmission());
+        verifyProgressAndNoError();
+    }
+
+    @Test
+    public void refreshSpecificSubreddit() {
+        presenter.refreshSubmissions(subreddits.get(1));
+        verify(dataManager, times(1)).clear();
+        verify(dataManager, times(1)).downloadSubmissions();
+        verify(submissionsView, times(0)).showSubmission(any(Submission.class));
+        verifyProgressAndNoError();
     }
 }
