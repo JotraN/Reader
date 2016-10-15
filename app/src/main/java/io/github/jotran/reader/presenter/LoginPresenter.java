@@ -3,6 +3,7 @@ package io.github.jotran.reader.presenter;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import io.github.jotran.reader.model.DataManager;
 import io.github.jotran.reader.view.activity.MainActivity;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -23,6 +24,11 @@ public class LoginPresenter extends BasePresenter {
         mView = loginView;
     }
 
+    public LoginPresenter(Context context, LoginView loginView, DataManager dataManager) {
+        super(context, dataManager);
+        mView = loginView;
+    }
+
     /**
      * Attempts to authenticate the client.
      * Shows the login screen if the user is logged out.
@@ -31,8 +37,11 @@ public class LoginPresenter extends BasePresenter {
     public void authenticate() {
         // Always clear data when first authenticating.
         mDataManager.clear();
-        SharedPreferences prefs = mContext
-                .getSharedPreferences(MainActivity.PREFS_NAME, 0);
+        SharedPreferences prefs = mContext.getSharedPreferences(MainActivity.PREFS_NAME, 0);
+        if(prefs == null) {
+            mView.showLogin(mDataManager.getAuthUrl());
+            return;
+        }
         String refreshToken = prefs.getString(MainActivity.PREFS_REFRESH_TOKEN, null);
         boolean loggedOut = refreshToken == null;
         if (loggedOut)
@@ -54,10 +63,12 @@ public class LoginPresenter extends BasePresenter {
                     if (refreshToken != null) {
                         SharedPreferences prefs = mContext
                                 .getSharedPreferences(MainActivity.PREFS_NAME, 0);
-                        SharedPreferences.Editor editor = prefs.edit();
-                        editor.putString(MainActivity.PREFS_REFRESH_TOKEN, refreshToken);
-                        editor.putString(MainActivity.PREFS_USER_NAME, mDataManager.getUserName());
-                        editor.apply();
+                        if(prefs != null) {
+                            SharedPreferences.Editor editor = prefs.edit();
+                            editor.putString(MainActivity.PREFS_REFRESH_TOKEN, refreshToken);
+                            editor.putString(MainActivity.PREFS_USER_NAME, mDataManager.getUserName());
+                            editor.apply();
+                        }
                         mView.showAuthenticated();
                     } else
                         mView.showError(new Exception("User authentication failed."));

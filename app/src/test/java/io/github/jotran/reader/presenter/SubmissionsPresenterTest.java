@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 
 public class SubmissionsPresenterTest {
     @Rule
-    public final RxSchedulersOverrideRule mOverrideSchedulersRule = new RxSchedulersOverrideRule();
+    public final RxSchedulersOverrideRule overrideSchedulersRule = new RxSchedulersOverrideRule();
 
     @Mock
     private SubmissionsPresenter.SubmissionsView submissionsView;
