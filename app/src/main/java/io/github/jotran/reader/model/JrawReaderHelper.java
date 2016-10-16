@@ -1,5 +1,8 @@
 package io.github.jotran.reader.model;
 
+import android.content.res.Resources;
+import android.support.annotation.NonNull;
+
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.http.UserAgent;
@@ -13,8 +16,10 @@ import net.dean.jraw.models.Submission;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.github.jotran.reader.R;
+
 public class JrawReaderHelper {
-    private static JrawReaderHelper mInstance = new JrawReaderHelper();
+    private static JrawReaderHelper mInstance;
     public static final String REDIRECT_URL = "http://127.0.0.1";
     private Credentials mCredentials;
     private OAuthHelper mOAuthHelper;
@@ -27,16 +32,18 @@ public class JrawReaderHelper {
      *
      * @return the current instance of the {@code JrawReaderHelper}
      */
-    public static JrawReaderHelper getInstance() {
+    public static JrawReaderHelper getInstance(@NonNull Resources resources) {
+        if (mInstance == null)
+            mInstance = new JrawReaderHelper(resources);
         return mInstance;
     }
 
-    private JrawReaderHelper() {
+    private JrawReaderHelper(@NonNull Resources resources) {
         UserAgent myUserAgent = UserAgent.of("mobile", "io.github.jotran.reader",
                 "v0.1", "reader-app");
         mRedditClient = new RedditClient(myUserAgent);
         mOAuthHelper = mRedditClient.getOAuthHelper();
-        final String CLIENT_ID = "GvoFjvuX7sAH2g";
+        final String CLIENT_ID = resources.getString(R.string.reddit_client_id);
         mCredentials = Credentials.installedApp(CLIENT_ID, REDIRECT_URL);
     }
 
@@ -112,7 +119,7 @@ public class JrawReaderHelper {
                             account.getFullName());
             if (historyPaginator.hasNext()) {
                 for (Object submission : historyPaginator.next()) {
-                    if(((Submission) submission).getTitle() != null)
+                    if (((Submission) submission).getTitle() != null)
                         submissions.add((Submission) submission);
                 }
             }
@@ -143,7 +150,7 @@ public class JrawReaderHelper {
      *
      * @return the user name associated with the authenticated user
      */
-    public String getUserName(){
+    public String getUserName() {
         return mRedditClient.getAuthenticatedUser();
     }
 }

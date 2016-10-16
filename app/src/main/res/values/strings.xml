@@ -21,4 +21,6 @@
 
     <string name="drawer_open">Open Drawer</string>
     <string name="drawer_close">Close Drawer</string>
+
+    <string name="error_no_app">No application was found to open the submission with.</string>
 </resources>

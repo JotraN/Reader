@@ -20,7 +20,7 @@ public class DataManager {
      * @param context the application context used to access the app's database
      */
     public DataManager(Context context) {
-        mJrawHelper = JrawReaderHelper.getInstance();
+        mJrawHelper = JrawReaderHelper.getInstance(context.getResources());
         mDbHelper = new SubmissionDbHelper(context);
     }
 

@@ -181,6 +181,12 @@ public class SubmissionsFragment extends Fragment implements
 
     private void loadSubmission(Submission submission) {
         Uri uri = Uri.parse(submission.getShortURL());
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(uri);
+        if(intent.resolveActivity(getContext().getPackageManager()) == null) {
+            Snackbar.make(getView(), R.string.error_no_app, Snackbar.LENGTH_LONG).show();
+            return;
+        }
         startActivity(new Intent(Intent.ACTION_VIEW).setData(uri));
     }
 
